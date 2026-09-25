@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Three circles stacked vertically — mirrors the launcher's home screen layout.
+  Viewport is 108x108dp; safe zone (launcher crop) is the inner 72dp square (18–90).
+  Circles are left-offset like the real UI to give it character.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Small circle — top, r=9 -->
+    <path
+        android:fillColor="#CCFFFFFF"
+        android:pathData="M46,30 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0" />
+
+    <!-- Large circle — center, r=20 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M34,57 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0" />
+
+    <!-- Medium circle — bottom, r=13 -->
+    <path
+        android:fillColor="#99FFFFFF"
+        android:pathData="M41,84 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0" />
+
+</vector>
