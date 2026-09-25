@@ -106,7 +106,6 @@ import java.util.Locale
 fun HomeScreen(viewModel: LauncherViewModel) {
     val homeApps          by viewModel.homeApps.collectAsStateWithLifecycle()
     val allApps           by viewModel.allApps.collectAsStateWithLifecycle()
-    val unlockKey         by viewModel.unlockKey.collectAsStateWithLifecycle()
     val showDrawer        by viewModel.showDrawer.collectAsStateWithLifecycle()
     val isDarkMode        by viewModel.isDarkMode.collectAsStateWithLifecycle()
     val noteText          by viewModel.noteText.collectAsStateWithLifecycle()
@@ -132,17 +131,9 @@ fun HomeScreen(viewModel: LauncherViewModel) {
         val listState = rememberLazyListState()
         val haptic = LocalHapticFeedback.current
 
-        // ── Globe Rotation Animation ─────────────────────────────────────
+        // Globe rotation speeds up while the list is scrolling. The animation itself
+        // lives inside PixelIcon so it repaints only that canvas (see PixelIcon.kt).
         val isScrolling = listState.isScrollInProgress
-        var rotationAngle by remember { mutableStateOf(0f) }
-        LaunchedEffect(isScrolling) {
-            val baseSpeed = 0.02f
-            val scrollSpeed = 0.12f
-            while (true) {
-                rotationAngle = (rotationAngle + (if (isScrolling) scrollSpeed else baseSpeed)) % (2f * Math.PI.toFloat())
-                kotlinx.coroutines.delay(30)
-            }
-        }
 
         // ── Charging Flow Ring Animation ───────────────────────────────
         val infiniteTransition = rememberInfiniteTransition(label = "charging")
@@ -268,7 +259,6 @@ fun HomeScreen(viewModel: LauncherViewModel) {
                 ) { index, app ->
                     AppCircle(
                         appWithIcon = app,
-                        unlockKey   = unlockKey,
                         index       = index,
                         circleSize  = circleSize,
                         isDarkMode  = isDarkMode,
@@ -311,9 +301,9 @@ fun HomeScreen(viewModel: LauncherViewModel) {
                     modifier = Modifier.combinedClickable(
                         onClick = {
                             weatherAppPackage?.let { viewModel.launchApp(it) }
-                                ?: run { showWeatherAppPicker = true }
+                                ?: run { showWeatherDialog = true }
                         },
-                        onLongClick = { showWeatherAppPicker = true },
+                        onLongClick = { showWeatherDialog = true },
                     ),
                 )
             }
@@ -328,7 +318,7 @@ fun HomeScreen(viewModel: LauncherViewModel) {
                 verticalArrangement = Arrangement.spacedBy(28.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                PixelIcon(color = primary, rotationAngle = rotationAngle, modifier = Modifier.size(26.dp))
+                PixelIcon(color = primary, isScrolling = isScrolling, modifier = Modifier.size(26.dp))
                 ClockWidget(
                     isDarkMode = isDarkMode,
                     modifier = Modifier.combinedClickable(
@@ -770,8 +760,16 @@ fun HomeScreen(viewModel: LauncherViewModel) {
                         ) { Text("Save", fontFamily = FontFamily.Monospace) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showWeatherDialog = false }) {
-                            Text("Cancel", fontFamily = FontFamily.Monospace)
+                        Row {
+                            TextButton(
+                                onClick = {
+                                    showWeatherDialog = false
+                                    showWeatherAppPicker = true
+                                }
+                            ) { Text("App", fontFamily = FontFamily.Monospace) }
+                            TextButton(onClick = { showWeatherDialog = false }) {
+                                Text("Cancel", fontFamily = FontFamily.Monospace)
+                            }
                         }
                     }
                 )

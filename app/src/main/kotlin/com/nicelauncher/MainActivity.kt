@@ -22,14 +22,4 @@ class MainActivity : ComponentActivity() {
             HomeScreen(viewModel = viewModel)
         }
     }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        viewModel.onPause()
-    }
 }

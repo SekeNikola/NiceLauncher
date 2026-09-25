@@ -45,7 +45,6 @@ private const val PCT_SQUIRCLE = 34f
 @Composable
 fun AppCircle(
     appWithIcon: AppWithIcon,
-    unlockKey: Int,
     index: Int,
     circleSize: androidx.compose.ui.unit.Dp,
     isDarkMode: Boolean,
@@ -55,25 +54,27 @@ fun AppCircle(
 ) {
     val targetPct = PCT_SQUIRCLE
     val cornerPct = remember { Animatable(PCT_CIRCLE) }
-    val scale = remember { Animatable(0.78f) }
+    val scale = remember { Animatable(0.9f) }
 
-    LaunchedEffect(unlockKey) {
-        scale.snapTo(0.78f)
-        cornerPct.snapTo(PCT_CIRCLE)          // instant reset to circle
-        delay(index * 150L)                   // staggered reveal
+    // One-time entrance reveal. Keyed on Unit so it plays only when the circle
+    // first appears — NOT on every onResume. Returning home from an app therefore
+    // shows the icons instantly instead of replaying a slow staggered cascade.
+    LaunchedEffect(Unit) {
+        // Small stagger (capped) keeps the reveal lively without a long wait.
+        delay((index * 35L).coerceAtMost(280L))
         launch {
             scale.animateTo(
-                targetValue = 1.14f,
+                targetValue = 1.06f,
                 animationSpec = androidx.compose.animation.core.spring(
-                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioLowBouncy,
-                    stiffness = 70f,
+                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                    stiffness = 500f,
                 )
             )
             scale.animateTo(
                 targetValue = 1f,
                 animationSpec = androidx.compose.animation.core.spring(
                     dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
-                    stiffness = 85f,
+                    stiffness = 600f,
                 )
             )
         }
@@ -81,7 +82,7 @@ fun AppCircle(
             cornerPct.animateTo(
                 targetValue = targetPct,
                 animationSpec = tween(
-                    durationMillis = 2100,
+                    durationMillis = 420,
                     easing         = FastOutSlowInEasing
                 ),
             )

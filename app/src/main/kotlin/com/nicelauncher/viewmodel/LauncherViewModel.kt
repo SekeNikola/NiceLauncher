@@ -1,6 +1,10 @@
 package com.nicelauncher.viewmodel
 
 import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,13 +32,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     private val _allApps = MutableStateFlow<List<AppItem>>(emptyList())
     val allApps: StateFlow<List<AppItem>> = _allApps.asStateFlow()
-
-    // Incremented each unlock so LaunchedEffect(unlockKey) always fires
-    private val _unlockKey = MutableStateFlow(0)
-    val unlockKey: StateFlow<Int> = _unlockKey.asStateFlow()
-
-    private val _isUnlocked = MutableStateFlow(false)
-    val isUnlocked: StateFlow<Boolean> = _isUnlocked.asStateFlow()
 
     private val _showDrawer = MutableStateFlow(false)
     val showDrawer: StateFlow<Boolean> = _showDrawer.asStateFlow()
@@ -66,9 +63,30 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     private val _weatherAppPackage = MutableStateFlow(store.getWeatherAppPackage())
     val weatherAppPackage: StateFlow<String?> = _weatherAppPackage.asStateFlow()
 
+    // Refresh the app list only when packages are actually added/removed/replaced,
+    // rather than reloading every icon on each resume (which would be wasteful).
+    private val packageReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            loadApps()
+        }
+    }
+
     init {
         loadApps()
         refreshWeather()
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addDataScheme("package")
+        }
+        application.registerReceiver(packageReceiver, filter)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        runCatching { getApplication<Application>().unregisterReceiver(packageReceiver) }
     }
 
     fun updateNoteText(text: String) {
@@ -130,15 +148,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             }
             _homeApps.value = homeList
         }
-    }
-
-    fun onResume() {
-        _isUnlocked.value = true
-        _unlockKey.value++
-    }
-
-    fun onPause() {
-        _isUnlocked.value = false
     }
 
     fun addAppToHome(packageName: String) {

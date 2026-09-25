@@ -2,10 +2,16 @@ package com.nicelauncher.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
@@ -14,9 +20,20 @@ import kotlin.math.sqrt
 @Composable
 fun PixelIcon(
     color: Color,
-    rotationAngle: Float,
+    isScrolling: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // Rotation state lives here so the ticking animation only repaints this small
+    // canvas, instead of recomposing the entire HomeScreen ~33 times per second.
+    var rotationAngle by remember { mutableStateOf(0f) }
+    LaunchedEffect(isScrolling) {
+        val baseSpeed = 0.02f
+        val scrollSpeed = 0.12f
+        while (true) {
+            rotationAngle = (rotationAngle + (if (isScrolling) scrollSpeed else baseSpeed)) % (2f * Math.PI.toFloat())
+            delay(30)
+        }
+    }
     Canvas(modifier = modifier) {
         val rows = 7
         val cols = 11
